@@ -6,7 +6,7 @@ services:
     build:
       context: ./nf_upf
       args:
-        DEBUG_TOOLS: "false"
+        DEBUG_TOOLS: "true"
     command: bash -c "./upf-iptables.sh && ./upf -c ./config/upfcfg.yaml"
     volumes:
       - ./config/upfcfg.yaml:/free5gc/config/upfcfg.yaml
@@ -17,6 +17,10 @@ services:
       privnet:
         aliases:
           - upf.free5gc.org
+      dnninternet:
+        aliases:
+        - upf.internet.free5gc.org
+
 
   db:
     container_name: mongodb
@@ -240,13 +244,32 @@ services:
     depends_on:
       - db
 
-  ueransim:
-    container_name: ueransim
+  gnb:
+    container_name: gnb
     build:
       context: ./ueransim
     command: ./nr-gnb -c ./config/gnbcfg.yaml
     volumes:
       - ./config/gnbcfg.yaml:/ueransim/config/gnbcfg.yaml
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - "/dev/net/tun"
+    networks:
+      privnet:
+        aliases:
+          - gnb.core.free5gc.org
+          - gnb.ran.free5gc.org
+    depends_on:
+      - free5gc-amf
+      - free5gc-upf
+  
+  ue:
+    container_name: ue
+    build:
+      context: ./ueransim
+    command: ./nr-ue -c ./config/uecfg.yaml
+    volumes:
       - ./config/uecfg.yaml:/ueransim/config/uecfg.yaml
     cap_add:
       - NET_ADMIN
@@ -255,10 +278,21 @@ services:
     networks:
       privnet:
         aliases:
-          - gnb.free5gc.org
+          - ue.free5gc.org
     depends_on:
-      - free5gc-amf
-      - free5gc-upf
+      - gnb
+  
+  iperf:
+    container_name: iperf
+    image: networkstatic/iperf3
+    networks:
+      dnninternet:
+        aliases:
+          - iperf3.server.free5gc.org
+    expose:
+      - "5201"
+    command: -s -B iperf3.server.free5gc.org
+    restart: always
 
 networks:
   privnet:
@@ -268,6 +302,13 @@ networks:
         - subnet: 10.100.200.0/24
     driver_opts:
       com.docker.network.bridge.name: br-free5gc
+  dnninternet:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.100.201.0/24
+    driver_opts:
+      com.docker.network.bridge.name: br-free5gc-dnn
 
 volumes:
   dbdata:
