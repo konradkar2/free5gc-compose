@@ -1,22 +1,39 @@
 version: '3.8'
 
 services:
-  free5gc-upf:
-    container_name: upf
+  free5gc-upfa:
+    container_name: upfA
     build:
       context: ./nf_upf
       args:
         DEBUG_TOOLS: "false"
-    command: bash -c "./upf-iptables.sh && ./upf -c ./config/upfcfg.yaml"
+    command: bash -c "./upf-iptables.sh && ./upf -c ./config/upfAcfg.yaml"
     volumes:
-      - ./config/upfcfg.yaml:/free5gc/config/upfcfg.yaml
+      - ./config/upfAcfg.yaml:/free5gc/config/upfAcfg.yaml
       - ./config/upf-iptables.sh:/free5gc/upf-iptables.sh
     cap_add:
       - NET_ADMIN
     networks:
       privnet:
         aliases:
-          - upf.free5gc.org
+          - upfA.free5gc.org
+  
+  free5gc-upfb:
+    container_name: upfB
+    build:
+      context: ./nf_upf
+      args:
+        DEBUG_TOOLS: "false"
+    command: bash -c "./upf-iptables.sh && ./upf -c ./config/upfBcfg.yaml"
+    volumes:
+      - ./config/upfBcfg.yaml:/free5gc/config/upfBcfg.yaml
+      - ./config/upf-iptables.sh:/free5gc/upf-iptables.sh
+    cap_add:
+      - NET_ADMIN
+    networks:
+      privnet:
+        aliases:
+          - upfB.free5gc.org
 
   db:
     container_name: mongodb
@@ -152,7 +169,8 @@ services:
           - smf.free5gc.org
     depends_on:
       - free5gc-nrf
-      - free5gc-upf
+      - free5gc-upfa
+      - free5gc-upfb
 
   free5gc-udm:
     container_name: udm
@@ -197,28 +215,6 @@ services:
       - db
       - free5gc-nrf
 
-  free5gc-n3iwf:
-    container_name: n3iwf
-    build:
-      context: ./nf_n3iwf
-      args:
-        DEBUG_TOOLS: "false"
-    command: sh -c "./n3iwf-ipsec.sh && ./n3iwf -c ./config/n3iwfcfg.yaml"
-    volumes:
-      - ./config/n3iwfcfg.yaml:/free5gc/config/n3iwfcfg.yaml
-      - ./config/n3iwf-ipsec.sh:/free5gc/n3iwf-ipsec.sh
-    environment:
-      GIN_MODE: release
-    cap_add:
-      - NET_ADMIN
-    networks:
-      privnet:
-        aliases:
-          - n3iwf.free5gc.org
-    depends_on:
-      - free5gc-amf
-      - free5gc-smf
-      - free5gc-upf
 
   free5gc-webui:
     container_name: webui
@@ -258,7 +254,8 @@ services:
           - gnb.free5gc.org
     depends_on:
       - free5gc-amf
-      - free5gc-upf
+      - free5gc-upfa
+      - free5gc-upfb
 
 networks:
   privnet:

@@ -10,4 +10,6 @@ ueRoutingInfo: # the list of UE routing information
     # default path derived from this topology
     # node name should be consistent with smfcfg.yaml
       - A: gNB
-        B: UPF
+        B: UPFA
+      - A: gNB
+        B: UPFB
