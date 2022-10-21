@@ -18,9 +18,7 @@ services:
         aliases:
           - upf.free5gc.org
       dnninternet:
-        aliases:
-        - upf.internet.free5gc.org
-
+        ipv4_address: 10.100.201.10
 
   db:
     container_name: mongodb
@@ -28,6 +26,8 @@ services:
     command: mongod --port 27017
     expose:
       - "27017"
+    ports:
+      - "27017:27017"
     volumes:
       - dbdata:/data/db
     networks:
@@ -201,29 +201,6 @@ services:
       - db
       - free5gc-nrf
 
-  free5gc-n3iwf:
-    container_name: n3iwf
-    build:
-      context: ./nf_n3iwf
-      args:
-        DEBUG_TOOLS: "false"
-    command: sh -c "./n3iwf-ipsec.sh && ./n3iwf -c ./config/n3iwfcfg.yaml"
-    volumes:
-      - ./config/n3iwfcfg.yaml:/free5gc/config/n3iwfcfg.yaml
-      - ./config/n3iwf-ipsec.sh:/free5gc/n3iwf-ipsec.sh
-    environment:
-      GIN_MODE: release
-    cap_add:
-      - NET_ADMIN
-    networks:
-      privnet:
-        aliases:
-          - n3iwf.free5gc.org
-    depends_on:
-      - free5gc-amf
-      - free5gc-smf
-      - free5gc-upf
-
   free5gc-webui:
     container_name: webui
     build:
@@ -282,16 +259,26 @@ services:
     depends_on:
       - gnb
   
-  iperf:
-    container_name: iperf
+  iperf11:
+    container_name: iperf11
     image: networkstatic/iperf3
     networks:
       dnninternet:
-        aliases:
-          - iperf3.server.free5gc.org
+        ipv4_address: 10.100.201.11
     expose:
       - "5201"
-    command: -s -B iperf3.server.free5gc.org
+    command: -s -B 10.100.201.11
+    restart: always
+  
+  iperf12:
+    container_name: iperf12
+    image: networkstatic/iperf3
+    networks:
+      dnninternet:
+        ipv4_address: 10.100.201.12
+    expose:
+      - "5201"
+    command: -s -B 10.100.201.12
     restart: always
 
 networks:

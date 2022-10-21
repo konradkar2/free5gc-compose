@@ -3,7 +3,7 @@
 # Configure iptables in UPF
 #
 
-ip address show dev eth0 | grep 10.100.201.3
+ip address show dev eth0 | grep 10.100.201.10
 
 dnnIfc=""
 
